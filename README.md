@@ -1,4 +1,4 @@
-# Wild Ones Latin
+# Wild Ones
 
 ![alt text](Wild_Ones_Playdom.jpg)
 
@@ -7,16 +7,13 @@ Creating your OWN server of Wild Ones (without having too much knowledge) is now
 
 
 # Tutorial and useful links
-
-<p>- <a href="https://youtu.be/YFtHMBbn2MU">How to run the client. (Youtube Video)</a></p>
+<p>- <a href="https://github.com/jindrapetrik/jpexs-decompiler">SWF Decompiler</a></p>
 <p>- <a href="http://nodejs.org/">Node.js</a></p>
 <p>- <a href="https://www.mongodb.com/download-center?jmp=nav#community">MongoDB</a></p>
 
-
-Community in Discord 😄 <br>
-https://discord.gg/b9khNZg
-
-
 credits to:
-*WO PW
-and WO LATIN
+@krutt - Wild Ones - Private Wars
+@delvin and @1driss (WO:H Development)
+Patricio Alonso (2012 Client Weapon Fix)
+Ziverius (Haunted Mansion Map Design)
+
