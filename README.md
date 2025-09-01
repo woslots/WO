@@ -1,6 +1,6 @@
 # Wild Ones Latin
 
-![alt text](https://i.imgur.com/8OUniU7.png)
+![alt text](Wild_Ones_Playdom.jpg)
 
 
 Creating your OWN server of Wild Ones (without having too much knowledge) is now possible!
