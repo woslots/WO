@@ -39,41 +39,90 @@ function GameClient(clientRef) {
     // Add client to WOL safely
     if (typeof this.WOL.addClient === 'function') {
         this.WOL.addClient(this);
-        console.log(`➕ GameClient added to WOL: ${this.id}`);
+        console.log(`[GAME SERVER] ➕ GameClient added to WOL: ${this.id}`);
     } else {
-        console.warn(`⚠️ WOL.addClient missing for game client ${this.id}`);
+        console.warn(`[GAME SERVER] ⚠️ WOL.addClient missing for game client ${this.id}`);
     }
 
-    console.log(`>> Initialized game client ${this.id}`);
+    console.log(`[GAME SERVER] >> Initialized game client ${this.id}`);
 }
 
 GameClient.prototype = {
 
-    setupPlayer(doc) {
+    /*setupPlayer(doc) {
         if (!doc) return -1;
 
+        // Store full DB doc
         this.player = { ...doc };
         this.player.command = "player";
         this.player.online = this.WOL.getLobbyLoad ? this.WOL.getLobbyLoad() : 0;
 
-        console.log(`>> Player ${this.player.dname || this.id} entered game`);
+        console.log(`[GAME SERVER] >> Player ${this.player.dname || this.id} entered game`, this.player);
 
         // Initialize avatar
         this.avatar.initialize();
-        console.log(`🖼 Avatar initialized for ${this.player.dname || this.id}`);
+        console.log(`[GAME SERVER] 🖼 Avatar initialized for ${this.player.dname || this.id}`);
 
         // Send login acknowledgment
         this.sendLoginAck();
 
         return 1;
-    },
+    },*/
+	
+	setupPlayer(doc) {
+    if (!doc) return -1;
+
+    // Ensure numeric values from DB
+    this.player = {
+        ...doc,
+        treats: Number(doc.treats || 0),
+        gold: Number(doc.gold || 0),
+        level: Number(doc.level || 0),
+        xp: Number(doc.xp || 0),
+        command: "player",
+        online: this.WOL.getLobbyLoad ? this.WOL.getLobbyLoad() : 0
+    };
+
+    console.log(`[GAME SERVER] >> Player ${this.player.dname || this.id} entered game`, this.player);
+
+    this.avatar.initialize();
+    console.log(`[GAME SERVER] 🖼 Avatar initialized for ${this.player.dname || this.id}`);
+
+    this.sendLoginAck();
+
+    return 1;
+},
+	setupPlayer(doc) {
+    if (!doc) return -1;
+
+    // Ensure numeric values from DB
+    this.player = {
+        ...doc,
+        treats: Number(doc.treats || 0),
+        gold: Number(doc.gold || 0),
+        level: Number(doc.level || 0),
+        xp: Number(doc.xp || 0),
+        command: "player",
+        online: this.WOL.getLobbyLoad ? this.WOL.getLobbyLoad() : 0
+    };
+
+    console.log(`[GAME SERVER] >> Player ${this.player.dname || this.id} entered game`, this.player);
+
+    this.avatar.initialize();
+    console.log(`[GAME SERVER] 🖼 Avatar initialized for ${this.player.dname || this.id}`);
+
+    this.sendLoginAck();
+
+    return 1;
+},
+
 
     write(data) {
         if (this.sock && !this.sock.destroyed) {
             this.sock.write(data);
-            console.log(`📤 Sent data to ${this.id}:`, data.toString().slice(0, 200) + (data.length > 200 ? "..." : ""));
+            console.log(`[GAME SERVER] 📤 Sent data to ${this.id}:`, data.toString().slice(0, 200) + (data.length > 200 ? "..." : ""));
         } else {
-            console.warn(`⚠️ Attempted to write to destroyed socket ${this.id}`);
+            console.warn(`[GAME SERVER] ⚠️ Attempted to write to destroyed socket ${this.id}`);
         }
     },
 
@@ -90,23 +139,39 @@ GameClient.prototype = {
                 this.write(len + str);
             }
 
-            console.log(`✅ Packet sent for ${this.id}:`, packet.command || "no command");
+            console.log(`[GAME SERVER] ✅ Packet sent for ${this.id}:`, packet.command || "no command");
         } catch (e) {
-            console.error(`❌ Failed to send packet for ${this.id}:`, e);
+            console.error(`[GAME SERVER] ❌ Failed to send packet for ${this.id}:`, e);
         }
     },
 
-    sendLoginAck() {
+    /*sendLoginAck() {
         const ack = {
             command: "logInAck",
             id: this.id,
             dname: this.player.dname || "unknown",
-            treats: this.player.treats || 0,
-            gold: this.player.gold || 0
+            treats: this.player.treats ?? 0,
+            gold: this.player.gold ?? 0,
+            level: this.player.level ?? 0,
+            xp: this.player.xp ?? 0
         };
-        console.log(`🔑 Sending login acknowledgment to ${this.id}:`, ack);
+        console.log(`[GAME SERVER] 🔑 Sending login acknowledgment to ${this.id}:`, ack);
         this.sendPacket(ack);
-    },
+    },*/
+	
+	sendLoginAck() {
+    const ack = {
+        command: "logInAck",
+        id: this.id,
+        dname: this.player.dname || "unknown",
+        treats: this.player.treats,
+        gold: this.player.gold,
+        level: this.player.level,
+        xp: this.player.xp
+    };
+    console.log(`[GAME SERVER] 🔑 Sending login acknowledgment to ${this.id}:`, ack);
+    this.sendPacket(ack);
+},
 
     sendUpdate() {
         this.sendPacket(this.player);
@@ -116,20 +181,20 @@ GameClient.prototype = {
     updatePlayerData() {
         if (this.db && this.player.id) {
             this.db.update({ id: this.player.id }, this.player);
-            console.log(`💾 Updated player data in DB for ${this.id}`);
+            console.log(`[GAME SERVER] 💾 Updated player data in DB for ${this.id}`);
         }
     },
 
     addXP(amount) {
         this.player.xp = (this.player.xp || 0) + amount;
-        console.log(`⭐ Added ${amount} XP to ${this.id}. Total XP: ${this.player.xp}`);
+        console.log(`[GAME SERVER] ⭐ Added ${amount} XP to ${this.id}. Total XP: ${this.player.xp}`);
         this.sendUpdate();
         this.updatePlayerData();
     },
 
     addGold(amount, update = true) {
         this.player.gold = (this.player.gold || 0) + amount;
-        console.log(`💰 Added ${amount} gold to ${this.id}. Total gold: ${this.player.gold}`);
+        console.log(`[GAME SERVER] 💰 Added ${amount} gold to ${this.id}. Total gold: ${this.player.gold}`);
         if (update) {
             this.sendUpdate();
             this.updatePlayerData();
@@ -138,7 +203,7 @@ GameClient.prototype = {
 
     addTreats(amount, update = true) {
         this.player.treats = (this.player.treats || 0) + amount;
-        console.log(`🍪 Added ${amount} treats to ${this.id}. Total treats: ${this.player.treats}`);
+        console.log(`[GAME SERVER] 🍪 Added ${amount} treats to ${this.id}. Total treats: ${this.player.treats}`);
         if (update) {
             this.sendUpdate();
             this.updatePlayerData();
@@ -147,7 +212,7 @@ GameClient.prototype = {
 
     generateGameKey() {
         this.gameSession = this.WOL.updateGameKey ? this.WOL.updateGameKey(Utils.randKey()) : Utils.randKey();
-        console.log(`🔑 Generated game session key for ${this.id}: ${this.gameSession}`);
+        console.log(`[GAME SERVER] 🔑 Generated game session key for ${this.id}: ${this.gameSession}`);
         return this.gameSession;
     }
 };

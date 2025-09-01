@@ -18,7 +18,7 @@ class Slot {
         this.turnDuration = turnDuration;
 
         this.initialize();
-        console.log(`🕹 Slot ${this.gameId} created for map "${this.mapName}"`);
+        console.log(`[GAME SERVER] 🕹 Slot ${this.gameId} created for map "${this.mapName}"`);
     }
 
     initialize() {
@@ -34,12 +34,12 @@ class Slot {
         this.weapon = new WeaponManager(this);
         this.field = new Field(this);
         this.completedTurns = 0;
-        console.log(`🔄 Slot ${this.gameId} initialized`);
+        console.log(`[GAME SERVER] 🔄 Slot ${this.gameId} initialized`);
     }
 
     addClient(client) {
         if (this.clients[client.player.id]) {
-            console.warn(`⚠️ Client ${client.player.id} already in slot ${this.gameId}`);
+            console.warn(`[GAME SERVER] ⚠️ Client ${client.player.id} already in slot ${this.gameId}`);
             return;
         }
 
@@ -47,16 +47,16 @@ class Slot {
 
         if (client.avatar) {
             this.physicsObjects.push(client.avatar);
-            console.log(`➕ Client avatar added to physicsObjects for ${client.player.id}`);
+            console.log(`[GAME SERVER] ➕ Client avatar added to physicsObjects for ${client.player.id}`);
         } else {
-            console.warn(`!! Client avatar is null for ${client.player.id}`);
+            console.warn(`[GAME SERVER] !! Client avatar is null for ${client.player.id}`);
         }
 
         if (this.currentPlayer === -1 || client.player.id < this.currentPlayer) {
             this.currentPlayer = client.player.id;
         }
 
-        console.log(`➕ Client ${client.player.id} added to slot ${this.gameId}`);
+        console.log(`[GAME SERVER] ➕ Client ${client.player.id} added to slot ${this.gameId}`);
         this.sendConfirmation(client);
 
         // Trigger refresh on join
@@ -67,7 +67,7 @@ class Slot {
     }
 
     removeClient(client) {
-        console.log(`➖ Removing client ${client.player.id} from slot ${this.gameId}`);
+        console.log(`[GAME SERVER] ➖ Removing client ${client.player.id} from slot ${this.gameId}`);
 
         delete this.clients[client.player.id];
 
@@ -75,7 +75,7 @@ class Slot {
         if (deadIndex !== -1) this.deadPlayers.splice(deadIndex, 1);
 
         if (this.isStarting()) {
-            console.log(`⏹ Game start stopped due to client leaving`);
+            console.log(`[GAME SERVER] ⏹ Game start stopped due to client leaving`);
             this.stopGameStart();
         } else {
             this.refresh();
@@ -89,12 +89,12 @@ class Slot {
 
         if (!this.isRunning()) {
             if (playerCount >= 2 && !this.startingTimeout) {
-                console.log(`⏱ Starting game in 5s: ${playerCount} players ready`);
+                console.log(`[GAME SERVER] ⏱ Starting game in 5s: ${playerCount} players ready`);
                 this.updateGameStatus("starting");
                 this.refresh();
 
                 this.startingTimeout = setTimeout(() => {
-                    console.log(`🚀 Starting game now`);
+                    console.log(`[GAME SERVER] 🚀 Starting game now`);
                     this.startGame();
                     clearTimeout(this.startingTimeout);
                     this.startingTimeout = null;
@@ -102,12 +102,12 @@ class Slot {
 
             } else if (playerCount < 2) {
                 if (this.status !== "idle") {
-                    console.log(`🔄 Not enough players, setting status to idle`);
+                    console.log(`[GAME SERVER] 🔄 Not enough players, setting status to idle`);
                     this.updateGameStatus("idle");
                 }
 
                 if (this.startingTimeout) {
-                    console.log("🛑 Clearing pending game start timeout");
+                    console.log("[GAME SERVER] 🛑 Clearing pending game start timeout");
                     clearTimeout(this.startingTimeout);
                     this.startingTimeout = null;
                 }
@@ -127,7 +127,7 @@ class Slot {
     }
 
     stopGameStart() {
-        console.log("🛑 Stopping pending game start");
+        console.log("[GAME SERVER] 🛑 Stopping pending game start");
         if (this.startingTimeout) clearTimeout(this.startingTimeout);
         this.startingTimeout = null;
         this.updateGameStatus("idle");
@@ -149,7 +149,7 @@ class Slot {
             positions: this.getPlayerPositions()
         };
 
-        console.log(`🚀 Game started in slot ${this.gameId} with players:`, cmd.co);
+        console.log(`[GAME SERVER] 🚀 Game started in slot ${this.gameId} with players:`, cmd.co);
         this.sendPacket(cmd);
 
         // Refresh players only once at game start
@@ -172,12 +172,12 @@ class Slot {
 
     generateRndSeed() {
         this.randomSeed = Utils.randInt();
-        console.log(`🎲 Random seed generated: ${this.randomSeed}`);
+        console.log(`[GAME SERVER] 🎲 Random seed generated: ${this.randomSeed}`);
     }
 
     setNextTurn(delay) {
         this.turnEndTick = this.tick + (this.turnDuration / 10) + delay;
-        console.log(`⏳ Next turn will end at tick ${this.turnEndTick}`);
+        console.log(`[GAME SERVER] ⏳ Next turn will end at tick ${this.turnEndTick}`);
     }
 
     sendPacket(packet) {
@@ -188,7 +188,7 @@ class Slot {
                 client.sendPacket(packet);
             }
         }
-        if (DEBUG) console.log(`📡 Packet sent:`, packet.command || "no command");
+        if (DEBUG) console.log(`[GAME SERVER] 📡 Packet sent:`, packet.command || "no command");
     }
 
     sendPacketE(packet, clientExcl) {

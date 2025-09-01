@@ -22,7 +22,7 @@ Handler.prototype.handle = function(socket, data) {
         const json = JSON.parse(text);
         this.handleJSON(socket, json);
     } catch (err) {
-        console.error(`❌ Failed to parse JSON from ${socket.id}:`, err);
+        console.error(`[GAME SERVER] ❌ Failed to parse JSON from ${socket.id}:`, err);
     }
 };
 
@@ -44,7 +44,7 @@ Handler.prototype.handleJSON = function(socket, packet) {
             break;
 
         default:
-            console.warn(`⚠️ Unknown command "${packet.command}" from ${socket.id}`);
+            console.warn(`[GAME SERVER] ⚠️ Unknown command "${packet.command}" from ${socket.id}`);
     }
 };
 
@@ -84,7 +84,7 @@ Handler.prototype.handleJoinGame = function(socket, packet) {
 
     // Find or create slot
     if(!this.WOL.slots[gameId]) {
-        console.log(`🆕 Creating new slot: ${gameId}`);
+        console.log(`[GAME SERVER] 🆕 Creating new slot: ${gameId}`);
         this.WOL.slots[gameId] = new Slot(this.WOL, gameId, packet.mapName || "defaultMap", packet.playerCount || 2, packet.gameDuration || 180000, packet.turnDuration || 10000);
     }
     const slot = this.WOL.slots[gameId];
@@ -93,7 +93,7 @@ Handler.prototype.handleJoinGame = function(socket, packet) {
     if(!slot.containsClient(client)) {
         slot.addClient(client);
         client.connectionType = "game";
-        console.log(`🎮 Client ${client.id} moved to slot ${gameId}`);
+        console.log(`[GAME SERVER] 🎮 Client ${client.id} moved to slot ${gameId}`);
     }
 
     // Confirm join

@@ -28,22 +28,22 @@ class Client {
         if (!newObj) return;
         this.currentScope = newObj;
         this.eventTrigger.emit("newScope");
-        console.log(`🔄 Client ${this.id} assigned new scope`);
+        console.log(`[GAME SERVER] 🔄 Client ${this.id} assigned new scope`);
     }
 
     // Set or update player object
     setPlayer(playerObj) {
         this.player = playerObj;
-        console.log(`🎯 Player set for client ${this.id}:`, playerObj?.dname || "unknown");
+        console.log(`[GAME SERVER] 🎯 Player set for client ${this.id}:`, playerObj?.dname || "unknown");
     }
 
     // Write raw data to socket safely
     write(data) {
         if (this.sock && !this.sock.destroyed) {
             this.sock.write(data);
-            console.log(`📤 Data sent to client ${this.id}:`, data?.toString().slice(0, 200));
+            console.log(`[GAME SERVER] 📤 Data sent to client ${this.id}:`, data?.toString().slice(0, 200));
         } else {
-            console.warn(`⚠️ Attempted to write to destroyed or missing socket for client ${this.id}`);
+            console.warn(`[GAME SERVER] ⚠️ Attempted to write to destroyed or missing socket for client ${this.id}`);
         }
     }
 
@@ -53,16 +53,16 @@ class Client {
         try {
             const str = JSON.stringify(packet);
             this.write(str);
-            console.log(`✅ Packet sent to client ${this.id}:`, str?.slice(0, 200));
+            console.log(`[GAME SERVER] ✅ Packet sent to client ${this.id}:`, str?.slice(0, 200));
         } catch (err) {
-            console.error(`❌ Failed to send packet to client ${this.id}:`, err);
+            console.error(`[GAME SERVER] ❌ Failed to send packet to client ${this.id}:`, err);
         }
     }
 
     // Send player update to client
     sendUpdate() {
         if (!this.player) {
-            console.warn(`⚠️ sendUpdate called but player not set for client ${this.id}`);
+            console.warn(`[GAME SERVER] ⚠️ sendUpdate called but player not set for client ${this.id}`);
             return;
         }
         this.sendPacket(this.player);

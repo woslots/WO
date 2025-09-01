@@ -12,8 +12,16 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms'))
 // ---------- Global constants ----------
 const FULLNAME = "Wild Ones Latin";
 const SHORTNAME = "WOL";
-
 let db;
+
+// ---------- Testing Purposes ----------
+
+const WOL = require('../game/wol.js'); // your WOL class
+const globalWOL = new WOL();
+globalWOL.start(); // starts the game server on 127.0.0.1:8000
+const Utils = require('../game/helpers/utils.js'); // adjust path if needed
+const LobbyClient = require('../game/client/client.lobby.js');
+const GameClient = require('../game/client/client.game.js');
 
 // ---------- MongoDB ----------
 /*MongoClient.connect('mongodb://localhost:27017')
@@ -25,15 +33,15 @@ let db;
 */
 MongoClient.connect('mongodb://localhost:27017')
   .then(client => {
-    console.log(`[DB] ✅ Connected to MongoDB`);
+    console.log(`[WEB SERVER] [DB] ✅ Connected to MongoDB`);
     db = client.db('emu');
 
     // confirm collections
     db.listCollections().toArray().then(cols => {
-      console.log("[DB] Collections:", cols.map(c => c.name));
+      console.log("[WEB SERVER] [DB] Collections:", cols.map(c => c.name));
     });
   })
-  .catch(err => console.error(`[DB ERROR] ${err}`));
+  .catch(err => console.error(`[WEB SERVER] [DB ERROR] ${err}`));
 // ---------- Registration ----------
 app.post('/registered', async (req, res) => {
   try {
@@ -93,7 +101,7 @@ app.post('/registered', async (req, res) => {
 
     res.sendFile(path.join(__dirname, 'registered.html'));
   } catch (err) {
-    console.error(`[REGISTER ERROR] ${err}`);
+    console.error(`[WEB SERVER] [REGISTER ERROR] ${err}`);
     res.status(500).send("Registration error");
   }
 });
@@ -102,10 +110,10 @@ app.post('/registered', async (req, res) => {
 // ---------- Login / Game (minimal old-style) ----------
 app.post('/juego', async (req, res) => {
   const { dname, snum } = req.body;
-  console.log('[LOGIN] Attempt:', dname, snum);
+  console.log('[WEB SERVER] [LOGIN] Attempt:', dname, snum);
 
   if (!db) {
-    console.error('[DB] Not connected yet!');
+    console.error('[WEB SERVER] [DB] Not connected yet!');
     return res.status(500).send('Database not ready');
   }
 
@@ -113,16 +121,16 @@ app.post('/juego', async (req, res) => {
 
   try {
     const count = await users.countDocuments({});
-    console.log(`[DB] Users count: ${count}`);
+    console.log(`[WEB SERVER] [DB] Users count: ${count}`);
 
     const user = await users.findOne({ dname, snum });
-    console.log("[DB] Query result:", user);
+    console.log("[WEB SERVER] [DB] Query result:", user);
 
     if (user) {
-      console.log('[LOGIN] Success for', dname);
+      console.log('[WEB SERVER] [LOGIN] Success for', dname);
 
-      // Directly serve the SWF loader
-      return res.send(`
+      // Serve the SWF loader
+      const swfHTML = `
         <html>
           <head><title>Game</title></head>
           <body style="margin:0;padding:0;background:#000;overflow:hidden;">
@@ -137,13 +145,41 @@ app.post('/juego', async (req, res) => {
             </object>
           </body>
         </html>
-      `);
+      `;
+
+      // Optional: pre-initialize Lobby & Game clients without socket
+/*      if (globalWOL) {
+        // Lobby client
+        const lobbyClient = new LobbyClient({
+          sock: null, // real socket assigned when Flash connects
+          db,
+          WOL: globalWOL,
+          id: Utils.generateUUID(),
+          connectionType: "lobby"
+        });
+        lobbyClient.setupPlayer(user);
+
+        // Game client
+        const gameClient = new GameClient({
+          sock: null, // real socket assigned when Flash connects
+          db,
+          WOL: globalWOL,
+          id: Utils.generateUUID(),
+          connectionType: "game"
+        });
+        gameClient.setupPlayer(user);
+
+        console.log(`✅ Pre-initialized lobby and game clients for ${dname}`);
+      }*/
+
+      return res.send(swfHTML);
+
     } else {
-      console.log('[LOGIN] Failed for', dname);
+      console.log('[WEB SERVER] [LOGIN] Failed for', dname);
       return res.sendFile(path.join(__dirname, 'errorLogin.html'));
     }
   } catch (err) {
-    console.error('[DB ERROR]', err);
+    console.error('[WEB SERVER] [DB ERROR]', err);
     res.status(500).send('DB error');
   }
 });
@@ -158,4 +194,4 @@ app.use('/img', express.static(path.join(__dirname, '/img')));
 app.use('/auth-des', express.static(path.join(__dirname, '/auth-des')));
 
 // ---------- Start server ----------
-app.listen(80, () => console.log(`[SERVER] HTTP server running on port 80`));
+app.listen(80, () => console.log(`[WEB SERVER] HTTP server running on port 80`));

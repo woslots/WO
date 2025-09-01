@@ -25,9 +25,9 @@ function LobbyClient(clientRef) {
     if (typeof this.WOL.addClient === 'function' && this.connectionType === "lobby") {
         if (!this.WOL.lobbyClients || !this.WOL.lobbyClients[this.id]) {
             this.WOL.addClient(this);
-            console.log("➕ Client added to WOL:", this.id);
+            console.log("[GAME SERVER] ➕ Client added to WOL:", this.id);
         } else {
-            console.log("⚠️ Client already exists in WOL:", this.id);
+            console.log("[GAME SERVER] ⚠️ Client already exists in WOL:", this.id);
         }
     }
 }
@@ -35,13 +35,14 @@ function LobbyClient(clientRef) {
 LobbyClient.prototype = {
 
     setupPlayer(doc) {
-        if(!doc) return -1;
+        if (!doc) return -1;
 
+        // Store full DB doc
         this.player = { ...doc };
         this.player.command = "setPlayer";
         this.player.online = this.WOL.getLobbyLoad ? this.WOL.getLobbyLoad() : 0;
 
-        console.log(`>> Player ${this.player.dname || this.id} entered lobby`);
+        console.log(`>> Player ${this.player.dname || this.id} entered lobby`, this.player);
 
         this.sendLoginAck();
         this.sendAssets();
@@ -50,22 +51,22 @@ LobbyClient.prototype = {
     },
 
     write(data) {
-        if(this.sock && !this.sock.destroyed) {
+        if (this.sock && !this.sock.destroyed) {
             this.sock.write(data);
-            console.log(`📤 Sent data to ${this.id}:`, data.toString().slice(0, 200) + (data.length > 200 ? "..." : ""));
+            console.log(`[GAME SERVER] 📤 Sent data to ${this.id}:`, data.toString().slice(0, 200) + (data.length > 200 ? "..." : ""));
         } else {
-            console.warn(`⚠️ Attempted to write to destroyed socket ${this.id}`);
+            console.warn(`[GAME SERVER] ⚠️ Attempted to write to destroyed socket ${this.id}`);
         }
     },
 
     sendPacket(packet) {
-        if(!packet) return;
+        if (!packet) return;
         try {
             const str = JSON.stringify(packet);
             this.write(str);
-            console.log(`✅ Packet sent for ${this.id}:`, packet.command || "no command");
+            console.log(`[GAME SERVER] ✅ Packet sent for ${this.id}:`, packet.command || "no command");
         } catch (e) {
-            console.error(`❌ Failed to send packet for ${this.id}:`, e);
+            console.error(`[GAME SERVER] ❌ Failed to send packet for ${this.id}:`, e);
         }
     },
 
@@ -74,15 +75,17 @@ LobbyClient.prototype = {
             command: "logInAck",
             id: this.id,
             dname: this.player.dname || "unknown",
-            treats: this.player.treats || 0,
-            gold: this.player.gold || 0
+            treats: this.player.treats ?? 0,
+            gold: this.player.gold ?? 0,
+            level: this.player.level ?? 0,
+            xp: this.player.xp ?? 0,
         };
         this.sendPacket(ack);
-        console.log("🔑 Sending login acknowledgment:", ack);
+        console.log("[GAME SERVER] 🔑 Sending login acknowledgment:", ack);
     },
 
     sendAssets() {
-        if(!this.WOL) return;
+        if (!this.WOL) return;
 
         const assets = {
             command: "assets",
@@ -94,18 +97,18 @@ LobbyClient.prototype = {
             }
         };
         this.sendPacket(assets);
-        console.log("📦 Sending assets to client:", Object.keys(assets.data));
+        console.log("[GAME SERVER] 📦 Sending assets to client:", Object.keys(assets.data));
     },
 
     sendUpdate() {
         this.sendPacket(this.player);
-        if(this.WOL.updateLobbyPlayer) this.WOL.updateLobbyPlayer(this.player);
+        if (this.WOL.updateLobbyPlayer) this.WOL.updateLobbyPlayer(this.player);
     },
 
     chargeTreats(amount) {
-        if(amount < 0) return false;
+        if (amount < 0) return false;
         this.player.treats = parseInt(this.player.treats || 0);
-        if(this.player.treats >= amount) {
+        if (this.player.treats >= amount) {
             this.player.treats -= amount;
             this.sendUpdate();
             this.updatePlayerData();
@@ -115,9 +118,9 @@ LobbyClient.prototype = {
     },
 
     chargeGold(amount) {
-        if(amount < 0) return false;
+        if (amount < 0) return false;
         this.player.gold = parseInt(this.player.gold || 0);
-        if(this.player.gold >= amount) {
+        if (this.player.gold >= amount) {
             this.player.gold -= amount;
             this.sendUpdate();
             this.updatePlayerData();
@@ -127,29 +130,29 @@ LobbyClient.prototype = {
     },
 
     addWeapon(type, amount) {
-        if(!this.player.userWeaponsOwned) this.player.userWeaponsOwned = {};
-        if(this.player.userWeaponsOwned[type]) this.player.userWeaponsOwned[type] += amount;
+        if (!this.player.userWeaponsOwned) this.player.userWeaponsOwned = {};
+        if (this.player.userWeaponsOwned[type]) this.player.userWeaponsOwned[type] += amount;
         else this.player.userWeaponsOwned[type] = amount;
         this.sendUpdate();
         this.updatePlayerData();
-        console.log(`🛠 Added weapon to ${this.id}: ${type} x${amount}`);
+        console.log(`[GAME SERVER] 🛠 Added weapon to ${this.id}: ${type} x${amount}`);
     },
 
     updatePlayerData() {
-        if(this.db && this.player.id) {
+        if (this.db && this.player.id) {
             this.db.update({ id: this.player.id }, this.player);
-            console.log(`💾 Updated player data in DB for ${this.id}`);
+            console.log(`[GAME SERVER] 💾 Updated player data in DB for ${this.id}`);
         }
     },
 
     generateGameKey() {
         this.gameSession = this.WOL.updateGameKey ? this.WOL.updateGameKey(Utils.randKey()) : Utils.randKey();
-        console.log(`🔑 Generated game session key for ${this.id}: ${this.gameSession}`);
+        console.log(`[GAME SERVER] 🔑 Generated game session key for ${this.id}: ${this.gameSession}`);
         return this.gameSession;
     },
 
     sendJoinGame() {
-        if(!this.gameId || !this.WOL.slots[this.gameId]) return;
+        if (!this.gameId || !this.WOL.slots[this.gameId]) return;
 
         const slot = this.WOL.slots[this.gameId];
 
@@ -161,7 +164,7 @@ LobbyClient.prototype = {
         initData.session = this.gameSession;
         this.sendPacket(initData);
 
-        console.log(`🎮 Lobby client ${this.id} joined game ${this.gameId} and received initial data`);
+        console.log(`[GAME SERVER] 🎮 Lobby client ${this.id} joined game ${this.gameId} and received initial data`);
     }
 };
 

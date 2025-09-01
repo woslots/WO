@@ -70,26 +70,26 @@ Utils.stringToInt = function(str){
 
 Utils.randKey = function(){
     const key = Math.random().toString(36).substring(7);
-    console.log(`🔑 Utils.randKey -> ${key}`);
+    console.log(`[GAME SERVER] 🔑 Utils.randKey -> ${key}`);
     return key;
 };
 
 Utils.randInt = function(){
     const val = parseInt(Math.random() * 1000);
-    console.log(`🔢 Utils.randInt -> ${val}`);
+    console.log(`[GAME SERVER] 🔢 Utils.randInt -> ${val}`);
     return val;
 };
 
 Utils.md5 = function(str){
     const hash = md5(str);
-    console.log(`🔒 Utils.md5('${str}') -> ${hash}`);
+    console.log(`[GAME SERVER] 🔒 Utils.md5('${str}') -> ${hash}`);
     return hash;
 };
 
 // --- NEW: UUID generator ---
 Utils.generateUUID = function(){
     const id = uuidv4();
-    console.log(`🔑 Utils.generateUUID -> ${id}`);
+    console.log(`[GAME SERVER] 🔑 Utils.generateUUID -> ${id}`);
     return id;
 };
 

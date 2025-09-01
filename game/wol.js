@@ -47,10 +47,10 @@ class WOL {
     async start() {
         try {
             await this.db.connect();
-            console.log("✅ DB connected");
+            console.log("[GAME SERVER] ✅ DB connected");
 
             await this.loadAssetsAsync();
-            console.log("✅ Assets loaded");
+            console.log("[GAME SERVER] ✅ Assets loaded");
 
             this.onAssetsLoaded();
 
@@ -62,7 +62,7 @@ class WOL {
             this.procTimer = setInterval(this.update.bind(this), 100);
 
         } catch (err) {
-            console.error("❌ Startup failed:", err);
+            console.error("[GAME SERVER] ❌ Startup failed:", err);
             process.exit(1);
         }
     }
@@ -73,15 +73,15 @@ class WOL {
             try {
                 const body = await request(this.assetsURL + item + ".dat?cachev=" + this.assetsCacheVersion);
                 this.assetsObj[item] = JSON.parse(body);
-                console.log("✅ Loaded asset:", item);
+                console.log("[GAME SERVER] ✅ Loaded asset:", item);
             } catch (e) {
-                console.error("❌ Failed to load asset:", item, e);
+                console.error("[GAME SERVER] ❌ Failed to load asset:", item, e);
             }
         }
     }
 
     onAssetsLoaded() {
-        console.log("Processing assets...");
+        console.log("[GAME SERVER] Processing assets...");
         this.processConfig();
         this.processAccessories();
         this.processCrate();
@@ -90,10 +90,21 @@ class WOL {
         this.processPetFoods();
         this.processPets();
         this.processWeaponsGrid();
-        console.log("✅ Assets processed.");
+        console.log("[GAME SERVER] ✅ Assets processed.");
     }
 
-    processConfig() { this.config = this.assetsObj["Config"]; }
+    //processConfig() { this.config = this.assetsObj["Config"]; }
+	
+	processConfig() {
+    this.config = { ...this.assetsObj["Config"] };
+
+    // Override host to a reachable address
+    // Use localhost for testing or your LAN IP
+    this.config.host = "127.0.0.1"; 
+
+    // Optional: log the host so you can verify
+    console.log(`[GAME SERVER] Using host for client connections: ${this.config.host}`);
+}
 
     processAccessories() {
         for (let item of this.assetsObj["Accessories"]) {
@@ -163,19 +174,19 @@ class WOL {
         slot.turnDuration = turnDuration;
 
         this.slots[testGameId] = slot;
-        console.log(`🕹 Slot ${testGameId} created for map "${testMap}"`);
+        console.log(`[GAME SERVER] 🕹 Slot ${testGameId} created for map "${testMap}"`);
     }
 
     run() {
-        console.log(`🚀 WOL server listening on 127.0.0.1:${gameport}`);
+        console.log(`[GAME SERVER] 🚀 WOL server listening on 127.0.0.1:${gameport}`);
 
         this.server = net.createServer((socket) => {
             socket.id = UUID();
-            console.log(`🔗 New connection: ${socket.remoteAddress}:${socket.remotePort} (ID: ${socket.id})`);
+            console.log(`[GAME SERVER] 🔗 New connection: ${socket.remoteAddress}:${socket.remotePort} (ID: ${socket.id})`);
 
             socket.on("data", (data) => {
                 const text = data.toString().trim();
-                console.log(`📥 Data received from ${socket.id}:`, text.slice(0, 200) + (text.length > 200 ? "..." : ""));
+                console.log(`[GAME SERVER] 📥 Data received from ${socket.id}:`, text.slice(0, 200) + (text.length > 200 ? "..." : ""));
 
                 // Flash policy request
                 if (text.startsWith("<policy-file-request")) {
@@ -210,13 +221,13 @@ class WOL {
                     try {
                         this.packetHandler.handle(socket.clientObj?.currentScope, Buffer.from(jsonData));
                     } catch (e) {
-                        console.error(`❌ Error handling data from ${socket.id}:`, e);
-                        console.error("❌ Raw data:", jsonData);
+                        console.error(`[GAME SERVER] ❌ Error handling data from ${socket.id}:`, e);
+                        console.error("[GAME SERVER] ❌ Raw data:", jsonData);
                     }
                 }
             });
 
-            socket.on("error", (e) => console.error(`⚠️ Socket error ${socket.id}:`, e));
+            socket.on("error", (e) => console.error(`[GAME SERVER] ⚠️ Socket error ${socket.id}:`, e));
             socket.on("close", () => this.removeClientObj(socket.clientObj?.currentScope));
             socket.on("end", () => this.removeClientObj(socket.clientObj?.currentScope));
 
@@ -225,19 +236,19 @@ class WOL {
             obj.currentScope = obj;
             socket.clientObj = obj;
 
-            console.log(`✅ Client object created for ${socket.id}`);
+            console.log(`[GAME SERVER] ✅ Client object created for ${socket.id}`);
 
             obj.eventTrigger.on("newScope", () => {
-                console.log(`🔄 New scope assigned for ${socket.id}`);
+                console.log(`[GAME SERVER] 🔄 New scope assigned for ${socket.id}`);
                 obj.currentScope = obj.newObject || obj.currentScope;
             });
         });
 
         this.server.listen(gameport, "127.0.0.1", () => {
-            console.log(`✅ Server listening on 127.0.0.1:${gameport}`);
+            console.log(`[GAME SERVER] ✅ Server listening on 127.0.0.1:${gameport}`);
         });
 
-        this.server.on("error", (err) => console.error("❌ Server error:", err));
+        this.server.on("error", (err) => console.error("[GAME SERVER] ❌ Server error:", err));
     }
 
     update() {
@@ -246,45 +257,45 @@ class WOL {
                 const slot = this.slots[key];
                 if (typeof slot.update === "function") slot.update();
             } catch (e) {
-                console.error("❌ Slot update error:", e);
+                console.error("[GAME SERVER] ❌ Slot update error:", e);
             }
         }
     }
 
     addClient(obj) {
-        console.log(`➕ Adding client ${obj.sock.id} type: ${obj.connectionType}`);
+        console.log(`[GAME SERVER] ➕ Adding client ${obj.sock.id} type: ${obj.connectionType}`);
 
         if (obj.connectionType === "lobby") {
             if (!this.lobbyClients[obj.sock.id]) this.lobbyClients[obj.sock.id] = obj;
-            else console.warn(`⚠️ Lobby client ${obj.sock.id} already exists, skipping add`);
+            else console.warn(`[GAME SERVER] ⚠️ Lobby client ${obj.sock.id} already exists, skipping add`);
         } else if (obj.connectionType === "ladder") {
             if (!this.ladderClients[obj.sock.id]) this.ladderClients[obj.sock.id] = obj;
-            else console.warn(`⚠️ Ladder client ${obj.sock.id} already exists, skipping add`);
+            else console.warn(`[GAME SERVER] ⚠️ Ladder client ${obj.sock.id} already exists, skipping add`);
         } else if (obj.connectionType === "game") {
             if (!obj.gameId) {
-                console.warn(`⚠️ Game client ${obj.sock.id} has no gameId`);
+                console.warn(`[GAME SERVER] ⚠️ Game client ${obj.sock.id} has no gameId`);
                 return;
             }
             if (!this.slots[obj.gameId]) {
-                console.log(`🕹 Creating new game slot: ${obj.gameId}`);
+                console.log(`[GAME SERVER] 🕹 Creating new game slot: ${obj.gameId}`);
                 this.slots[obj.gameId] = new Slot(obj.gameId, this);
             }
             if (!this.slots[obj.gameId].clients.includes(obj)) {
-                console.log(`🎮 Adding client ${obj.sock.id} to game slot ${obj.gameId}`);
+                console.log(`[GAME SERVER] 🎮 Adding client ${obj.sock.id} to game slot ${obj.gameId}`);
                 this.slots[obj.gameId].addClient(obj);
             } else {
-                console.warn(`⚠️ Client ${obj.sock.id} already in game slot ${obj.gameId}`);
+                console.warn(`[GAME SERVER] ⚠️ Client ${obj.sock.id} already in game slot ${obj.gameId}`);
             }
         }
     }
 
     removeClientObj(obj) {
         if (!obj) return;
-        console.log(`➖ Removing client ${obj.sock.id} type: ${obj.connectionType}`);
+        console.log(`[GAME SERVER] ➖ Removing client ${obj.sock.id} type: ${obj.connectionType}`);
         if (obj.connectionType === "lobby") delete this.lobbyClients[obj.sock.id];
         else if (obj.connectionType === "ladder") delete this.ladderClients[obj.sock.id];
         else if (obj.connectionType === "game" && obj.gameId && this.slots[obj.gameId]) {
-            console.log(`🗑 Removing client ${obj.sock.id} from game slot ${obj.gameId}`);
+            console.log(`[GAME SERVER] 🗑 Removing client ${obj.sock.id} from game slot ${obj.gameId}`);
             this.slots[obj.gameId].removeClient(obj);
         }
     }
