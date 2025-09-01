@@ -7,7 +7,7 @@
 <p>- <a href="http://nodejs.org/">Node.js</a></p>
 <p>- <a href="https://www.mongodb.com/download-center?jmp=nav#community">MongoDB</a></p>
 
-credits to:<p>
+# Credits To:
 @krutt - Wild Ones - Private Wars<p>
 @delvin and @1driss (WO:H Development)<p>
 Patricio Alonso (2012 Client Weapon Fix)<p>
