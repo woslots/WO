@@ -1,7 +1,7 @@
 # Wild Ones
 
 ![alt text](Wild_Ones_Playdom.jpg)
-Status: Currently in development/upgrade.
+<p>Status: Currently in development/upgrade.
 
 # Tutorial and useful links
 <p>- <a href="https://github.com/jindrapetrik/jpexs-decompiler">SWF Decompiler</a></p>
