@@ -9,7 +9,10 @@
 
 # Credits To
 @krutt - Wild Ones - Private Wars<p>
-@delvin and @1driss (WO:H Development)
+@delvin and @1driss (WO:H Development)<p>
 Patricio Alonso (2012 Client Weapon Fix)<p>
-Ziverius (Haunted Mansion Map Design)
+Ziverius (Haunted Mansion Map Design)<p>
+
+#Status
+Currently in development/upgrade.
 
