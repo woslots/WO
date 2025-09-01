@@ -1,6 +1,7 @@
 # Wild Ones
 
 ![alt text](Wild_Ones_Playdom.jpg)
+Status: Currently in development/upgrade.
 
 # Tutorial and useful links
 <p>- <a href="https://github.com/jindrapetrik/jpexs-decompiler">SWF Decompiler</a></p>
@@ -12,7 +13,3 @@
 @delvin and @1driss (WO:H Development)<p>
 Patricio Alonso (2012 Client Weapon Fix)<p>
 Ziverius (Haunted Mansion Map Design)<p>
-
-#Status
-Currently in development/upgrade.
-
